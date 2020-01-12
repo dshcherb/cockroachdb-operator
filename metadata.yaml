@@ -1,0 +1,16 @@
+name: cockroachdb
+summary: CockroachDB Charm
+maintainers:
+    - github.com/dshcherb
+description: CockroachDB Charm
+tags:
+    - database
+provides:
+  db:
+    interface: pgsql
+    optional: true
+peers:
+  cockroachpeer:
+    interface: cockroachpeer
+series:
+   - bionic

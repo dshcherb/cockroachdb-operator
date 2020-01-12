@@ -1,0 +1,13 @@
+options:
+    version:
+        type: string
+        description: CockroachDB version to use.
+        default: v19.2.2
+    default_zone_replicas:
+        type: int
+        description: The number of replicas to configure for the default replication zone. Using 0 means that the charm will use cluster defaults (see https://www.cockroachlabs.com/docs/stable/configure-replication-zones.html#replication-zone-variables).
+        default: 0
+    system_data_replicas:
+        type: int
+        description: The number of replicas to configure for the internal system data. Using 0 means that the charm will use cluster defaults (see https://www.cockroachlabs.com/docs/stable/configure-replication-zones.html#replication-zone-variables)
+        default: 0

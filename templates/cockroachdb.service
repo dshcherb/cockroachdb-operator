@@ -1,0 +1,14 @@
+[Unit]
+Description=Cockroach Database cluster node
+Requires=network.target
+[Service]
+Type=notify
+WorkingDirectory={{ working_directory }}
+{{ exec_start_line }}
+TimeoutStopSec=60
+Restart=always
+RestartSec=10
+SyslogIdentifier=cockroach
+User=cockroach
+[Install]
+WantedBy=default.target
