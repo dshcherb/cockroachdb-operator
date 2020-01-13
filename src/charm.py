@@ -91,7 +91,7 @@ class CockroachDBCharm(CharmBase):
 
         if self.is_single_node:
             # start-single-node will set replication factors for all zones to 1.
-            exec_start_line = f'ExecStart={self.COCKROACH_BINARY_PATH} start-single-node --insecure'
+            exec_start_line = f'ExecStart={self.COCKROACH_BINARY_PATH} start-single-node --advertise-addr {self.peers.advertise_addr} --insecure'
         else:
             join_addresses = f'{self.peers.advertise_addr},{",".join(self.peers.peer_addresses)}'
             # --insecure until the charm gets CA setup support figured out.
