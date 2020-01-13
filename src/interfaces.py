@@ -21,19 +21,20 @@ class CockroachDBPeers(Object):
     def is_joined(self):
         return self.framework.model.get_relation(self.relation_name)
 
-    def on_cockroachpeer_relation_joined(self, event):
-        self.peer_rel = self._relations[0]
+    @property
+    def peer_rel(self):
+        return self.framework.model.get_relation(self.relation_name)
 
     def on_cluster_initialized(self, event):
         if not self.framework.model.unit.is_leader():
             raise RuntimeError('The initial unit of a cluster must also be a leader.')
-        self.peer_rel['initial_unit'] = self.framework.model.unit.name
+        self.peer_rel.data[self.peer_rel.app]['initial_unit'] = self.framework.model.unit.name
         self.peer_rel.data[self.peer_rel.app]['cluster_id'] = event.cluster_id
 
     @property
     def is_cluster_initialized(self):
         """Determined by the presence of a cluster ID."""
-        return True if self.peer_rel.data[self.peer_rel.app]['cluster_id'] else False
+        return self.peer_rel.data[self.peer_rel.app].get('cluster_id') is not None
 
     @property
     def initial_unit(self):

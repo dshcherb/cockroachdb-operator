@@ -57,14 +57,13 @@ class CockroachDBCharm(CharmBase):
 
         for event in (self.on.install,
                       self.on.start,
-                      self.on.upgrade_charm,
-                      self.on.config_changed,
+                      # self.on.upgrade_charm,
+                      # self.on.config_changed,
                       self.on.cockroachpeer_relation_changed,
                       self.on.cockroachdb_started):
             self.framework.observe(event, self)
 
         self.peers = CockroachDBPeers(self, 'cockroachpeer')
-        self.framework.observe(self.on.cockroachpeer_relation_joined, self.peers)
         self.framework.observe(self.on.cluster_initialized, self.peers)
 
     def on_install(self, event):
@@ -115,14 +114,14 @@ class CockroachDBCharm(CharmBase):
         # don't start the process if the cluster has already been initialized.
         # This configuration is not practical in real deployments (i.e. multiple units, RF=1).
         initial_unit = self.peers.initial_unit
-        if self.is_single_node and (initial_unit is not None and self.framework.unit.name != initial_unit):
+        if self.is_single_node and (initial_unit is not None and self.framework.model.unit.name != initial_unit):
             unit.status = BlockedStatus('Extra unit in a single-node deployment.')
             return
         subprocess.check_call(['systemctl', 'start', f'{self.COCKROACHDB_SERVICE}'])
         self.state.is_started = True
         self.on.cockroachdb_started.emit()
 
-        if self.peers.is_cluster_initialized:
+        if self.peers.is_joined and self.peers.is_cluster_initialized:
             unit.status = ActiveStatus()
 
     def on_cockroachpeer_relation_changed(self, event):
@@ -130,6 +129,10 @@ class CockroachDBCharm(CharmBase):
             self.framework.model.unit.status = ActiveStatus()
 
     def on_cockroachdb_started(self, event):
+        if not self.peers.is_joined:
+            event.defer()
+            return
+
         unit = self.framework.model.unit
         if self.peers.is_cluster_initialized:
             # Skip this event when some other unit has already initialized a cluster.
@@ -138,6 +141,7 @@ class CockroachDBCharm(CharmBase):
         elif not unit.is_leader():
             unit.status = WaitingStatus('Waiting for the leader unit to initialize a cluster.')
             event.defer()
+            return
 
         unit.status = MaintenanceStatus('Initializing the cluster')
         # Initialize the cluster if we're a leader in a multi-node deployment.
