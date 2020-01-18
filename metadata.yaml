@@ -14,3 +14,8 @@ peers:
     interface: cockroachpeer
 series:
    - bionic
+resources:
+  cockroach-linux-amd64:
+    type: file
+    filename: cockroach.linux-amd64.tgz
+    description: An archive with a binary named "cockroach" as downloaded from https://binaries.cockroachdb.com/cockroach-<version>.linux-amd64.tgz

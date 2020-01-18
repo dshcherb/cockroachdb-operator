@@ -1,13 +1,12 @@
-import json
-import subprocess
-
 from ops.framework import Object
 
 
 class CockroachDBPeers(Object):
-    def __init__(self, parent, relation_name):
-        super().__init__(parent, relation_name)
+    def __init__(self, charm, relation_name):
+        super().__init__(charm, relation_name)
         self.relation_name = relation_name
+
+        self.framework.observe(charm.on.cluster_initialized, self)
 
     @property
     def _relations(self):
@@ -19,7 +18,7 @@ class CockroachDBPeers(Object):
 
     @property
     def is_joined(self):
-        return self.framework.model.get_relation(self.relation_name)
+        return self.framework.model.get_relation(self.relation_name) is not None
 
     @property
     def peer_rel(self):
@@ -53,9 +52,4 @@ class CockroachDBPeers(Object):
 
     @property
     def advertise_addr(self):
-        network_info = self.__network_get('cockroachpeer')
-        return network_info['ingress-address']
-
-    # TODO: move this to the operator framework model backend
-    def __network_get(self, endpoint):
-        return json.loads(subprocess.check_output(['network-get', endpoint, '--format=json']).decode('utf-8'))
+        return self.model.bindings['cockroachpeer'].ingress_address
