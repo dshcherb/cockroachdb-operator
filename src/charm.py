@@ -203,7 +203,7 @@ class CockroachDBCharm(CharmBase):
                 return m.group('uuid')
         raise RuntimeError('could not find cluster-id in the gossip-values output')
 
-    def on_config_changed(self):
+    def on_config_changed(self, event):
         # TODO: handle configuration changes to replication factors and apply them via cockroach sql.
         pass
 
