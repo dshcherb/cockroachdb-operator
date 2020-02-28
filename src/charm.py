@@ -109,7 +109,7 @@ class CockroachDBCharm(CharmBase):
             peer_addresses = [self.peers.advertise_addr]
             if self.peers.is_joined:
                 peer_addresses.extend(self.peers.peer_addresses)
-            join_addresses = ','.join(peer_addresses)
+            join_addresses = ','.join([str(a) for a in peer_addresses])
             # --insecure until the charm gets CA setup support figured out.
             exec_start_line = (f'ExecStart={self.COCKROACH_BINARY_PATH} start --insecure '
                                f'--advertise-addr={self.peers.advertise_addr} '
