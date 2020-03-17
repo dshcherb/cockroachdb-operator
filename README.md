@@ -26,6 +26,17 @@ HA with an explicit amount of replicas.
 juju deploy <charm-src-dir> --config default_zone_replicas=3 --config system_data_replicas=3 -n 3
 ```
 
+# Accessing CLI
+
+```
+juju ssh cockroachdb/0
+cockroach sql
+```
+
+# Web UI
+
+The web UI is accessible at `https://<unit-ip>:8080`
+
 # Known Issues
 
 The charm uses a workaround for [LP: #1859769](https://bugs.launchpad.net/juju/+bug/1859769) for single-node deployments by saving a cluster ID in a local state before the peer relation becomes available.
