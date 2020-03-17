@@ -65,4 +65,4 @@ class CockroachDBPeers(Object):
 
     @property
     def advertise_addr(self):
-        self.model.get_binding(self._relation_name).network.ingress_address
+        return self.model.get_binding(self._relation_name).network.ingress_address
