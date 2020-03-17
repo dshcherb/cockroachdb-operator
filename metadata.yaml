@@ -3,6 +3,7 @@ summary: CockroachDB Charm
 maintainers:
     - github.com/dshcherb
 description: CockroachDB Charm
+min-juju-version: 2.7.5
 tags:
     - database
 provides:

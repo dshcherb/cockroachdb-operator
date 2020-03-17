@@ -163,27 +163,28 @@ class CockroachDBCharm(CharmBase):
             self.model.unit.status = ActiveStatus()
 
     def on_cockroachdb_started(self, event):
-        if not self.peers.is_joined:
+        if not self.peers.is_joined and not self.is_single_node:
+            self.unit.status = WaitingStatus('Waiting for peer units to join.')
             event.defer()
             return
 
-        unit = self.model.unit
         if self.peers.is_cluster_initialized:
             # Skip this event when some other unit has already initialized a cluster.
-            unit.status = ActiveStatus()
+            self.unit.status = ActiveStatus()
             return
-        elif not unit.is_leader():
-            unit.status = WaitingStatus('Waiting for the leader unit to initialize a cluster.')
+        elif not self.unit.is_leader():
+            self.unit.status = WaitingStatus('Waiting for the leader unit to initialize a cluster.')
             event.defer()
             return
 
-        unit.status = MaintenanceStatus('Initializing the cluster')
-        # Initialize the cluster if we're a leader in a multi-node deployment.
+        self.unit.status = MaintenanceStatus('Initializing the cluster')
+        # Initialize the cluster if we're a leader in a multi-node deployment, otherwise it have already
+        # been initialized by running start-single-node.
         if not self.is_single_node and self.model.unit.is_leader():
             subprocess.check_call([self.COCKROACH_BINARY_PATH, 'init', '--insecure'])
 
         self.on.cluster_initialized.emit(self.__get_cluster_id())
-        unit.status = ActiveStatus()
+        self.unit.status = ActiveStatus()
 
     def __get_cluster_id(self):
         for _ in range(self.MAX_RETRIES):
