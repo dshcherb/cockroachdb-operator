@@ -2,6 +2,7 @@
 
 import os
 import subprocess
+import socket
 import re
 import pwd
 import sys
@@ -18,6 +19,7 @@ from ops.model import (
     ModelError,
 )
 from interfaces import CockroachDBPeers
+from interface_proxy_listen_tcp import ProxyListenTcpInterfaceProvides
 
 from jinja import Environment, FileSystemLoader
 from datetime import timedelta
@@ -55,6 +57,8 @@ class CockroachDBCharm(CharmBase):
     COCKROACH_INSTALL_DIR = '/usr/local/bin'
     COCKROACH_BINARY_PATH = f'{COCKROACH_INSTALL_DIR}/cockroach'
     COCKROACH_USERNAME = 'cockroach'
+    PSQL_PORT = 26257
+    HTTP_PORT = 8080
 
     MAX_RETRIES = 10
     RETRY_TIMEOUT = timedelta(milliseconds=125)
@@ -62,19 +66,21 @@ class CockroachDBCharm(CharmBase):
     def __init__(self, framework, key):
         super().__init__(framework, key)
 
+        self.state.set_default(is_started=False)
+
         for event in (self.on.install,
                       self.on.start,
                       # self.on.upgrade_charm,
                       self.on.config_changed,
                       self.on.cockroachpeer_relation_changed,
-                      self.on.cockroachdb_started):
+                      self.on.cockroachdb_started,
+                      self.on.proxy_listen_tcp_relation_joined):
             self.framework.observe(event, self)
 
         self.peers = CockroachDBPeers(self, 'cockroachpeer')
+        self.tcp_load_balancer = ProxyListenTcpInterfaceProvides(self, 'proxy-listen-tcp')
 
     def on_install(self, event):
-        self.state.is_started = False
-
         try:
             resource_path = self.model.resources.fetch('cockroach-linux-amd64')
         except ModelError:
@@ -207,6 +213,24 @@ class CockroachDBCharm(CharmBase):
     def on_config_changed(self, event):
         # TODO: handle configuration changes to replication factors and apply them via cockroach sql.
         pass
+
+    def on_proxy_listen_tcp_relation_joined(self, event):
+        if not self.peers.is_cluster_initialized or not self.state.is_started:
+            event.defer()
+
+        # TODO: make load-balancer options tunable.
+        listen_options = [
+            f'bind :{self.PSQL_PORT}',
+            f'balance roundrobin',
+            f'timeout connect 10s',
+            f'timeout client 1m',
+            f'timeout server 1m',
+            'option clitcpka',
+            'option httpchk GET /health?ready=1',
+        ]
+        fqdn = socket.getnameinfo((str(self.peers.advertise_addr), 0), socket.NI_NAMEREQD)[0]
+        server_option = f'server {fqdn} {self.peers.advertise_addr}:{self.PSQL_PORT} check port {self.HTTP_PORT}'
+        self.tcp_load_balancer.expose_server(listen_options, server_option)
 
 
 if __name__ == '__main__':

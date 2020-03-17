@@ -4,3 +4,6 @@
 [submodule "mod/jinja"]
 	path = mod/jinja
 	url = https://github.com/pallets/jinja
+[submodule "mod/ops-interface-proxy-listen-tcp"]
+	path = mod/ops-interface-proxy-listen-tcp
+	url = https://github.com/dshcherb/ops-interface-proxy-listen-tcp

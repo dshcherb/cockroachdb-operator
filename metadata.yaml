@@ -10,6 +10,8 @@ provides:
   db:
     interface: pgsql
     optional: true
+  proxy-listen-tcp:
+      interface: proxy-listen-tcp
 peers:
   cockroachpeer:
     interface: cockroachpeer

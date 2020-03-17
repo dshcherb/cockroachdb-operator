@@ -37,6 +37,18 @@ cockroach sql
 
 The web UI is accessible at `https://<unit-ip>:8080`
 
+# Using Haproxy as a Load-balancer
+
+An app deployed by this charm can be related to [charm-haproxy](https://github.com/dshcherb/charm-haproxy):
+
+```bash
+juju deploy <cockroachdb-charm-src-dir> --config default_zone_replicas=3 --config system_data_replicas=3 -n 3
+juju deploy <haproxy-charm-src-dir>
+juju relate haproxy cockroachdb
+```
+
+Currently the WEB UI is not exposed to an HTTP load-balancer (only postgres protocol connections over TCP are).
+
 # Known Issues
 
 The charm uses a workaround for [LP: #1859769](https://bugs.launchpad.net/juju/+bug/1859769) for single-node deployments by saving a cluster ID in a local state before the peer relation becomes available.
