@@ -52,7 +52,7 @@ class CockroachDBPeers(Object):
     def initial_unit(self):
         """Return the unit that has initialized the cluster."""
         if self.is_joined:
-            return self._relation.get('initial_unit')
+            return self._relation.data[self.model.app].get('initial_unit')
         else:
             return None
 
