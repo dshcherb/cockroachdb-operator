@@ -1,6 +1,10 @@
 CockroachDB Charm
 ==================================
 
+# Overview
+
+This charm provides means to deploy and operate cockroachdb - a scalable, cloud-native SQL database with built-in clustering support.
+
 # Deployment Requirements
 
 The charm requires Juju 2.7.5 to be present (see [LP: #1865229](https://bugs.launchpad.net/juju/+bug/1865229)).
