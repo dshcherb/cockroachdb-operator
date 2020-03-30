@@ -14,7 +14,7 @@ The charm requires Juju 2.7.5 to be present (see [LP: #1865229](https://bugs.lau
 In order to deploy CockroachDB in a single-node mode, set replication factors to 1 explicitly.
 
 ```bash
-juju deploy <charm-src-dir> --config default_zone_replicas=1 --config system_data_replicas=1
+juju deploy <charm-src-dir> --config default-zone-replicas=1 --config system-data-replicas=1
 ```
 
 CockroachDB will use a replication factor of 3 unless explicitly specified.
@@ -27,7 +27,7 @@ juju add-unit cockroachdb -n 2
 HA with an explicit amount of replicas.
 
 ```bash
-juju deploy <charm-src-dir> --config default_zone_replicas=3 --config system_data_replicas=3 -n 3
+juju deploy <charm-src-dir> --config default-zone-replicas=3 --config system-data-replicas=3 -n 3
 ```
 
 # Accessing CLI
@@ -46,7 +46,7 @@ The web UI is accessible at `https://<unit-ip>:8080`
 An app deployed by this charm can be related to [charm-haproxy](https://github.com/dshcherb/charm-haproxy):
 
 ```bash
-juju deploy <cockroachdb-charm-src-dir> --config default_zone_replicas=3 --config system_data_replicas=3 -n 3
+juju deploy <cockroachdb-charm-src-dir> --config default-zone-replicas=3 --config system-data-replicas=3 -n 3
 juju deploy <haproxy-charm-src-dir>
 juju relate haproxy cockroachdb
 ```
