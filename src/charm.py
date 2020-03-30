@@ -103,8 +103,8 @@ class CockroachDBCharm(CharmBase):
     @property
     def is_single_node(self):
         """Both replication factors were set to 1 so it's a good guess that an operator wants a 1-node deployment."""
-        default_zone_rf = self.model.config['default_zone_replicas']
-        system_data_rf = self.model.config['system_data_replicas']
+        default_zone_rf = self.model.config['default-zone-replicas']
+        system_data_rf = self.model.config['system-data-replicas']
         return default_zone_rf == 1 and system_data_rf == 1
 
     def _setup_systemd_service(self):
