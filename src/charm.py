@@ -227,6 +227,7 @@ class CockroachDBCharm(CharmBase):
             f'timeout server 1m',
             'option clitcpka',
             'option httpchk GET /health?ready=1',
+            'option tcplog',
         ]
         fqdn = socket.getnameinfo((str(self.peers.advertise_addr), 0), socket.NI_NAMEREQD)[0]
         server_option = f'server {fqdn} {self.peers.advertise_addr}:{self.PSQL_PORT} check port {self.HTTP_PORT}'
