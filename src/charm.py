@@ -230,7 +230,7 @@ class CockroachDBCharm(CharmBase):
         ]
         fqdn = socket.getnameinfo((str(self.peers.advertise_addr), 0), socket.NI_NAMEREQD)[0]
         server_option = f'server {fqdn} {self.peers.advertise_addr}:{self.PSQL_PORT} check port {self.HTTP_PORT}'
-        self.tcp_load_balancer.expose_server(listen_options, server_option)
+        self.tcp_load_balancer.expose_server(self.PSQL_PORT, listen_options, server_option)
 
 
 if __name__ == '__main__':
