@@ -13,8 +13,8 @@ provides:
   proxy-listen-tcp:
       interface: proxy-listen-tcp
 peers:
-  cockroachpeer:
-    interface: cockroachpeer
+  cluster:
+    interface: cockroachdb-peer
 series:
    - bionic
 resources:

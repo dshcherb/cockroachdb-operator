@@ -1,7 +1,7 @@
 from ops.framework import Object, StoredState
 
 
-class CockroachDBPeers(Object):
+class CockroachDBCluster(Object):
 
     state = StoredState()
 

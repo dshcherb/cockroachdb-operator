@@ -18,7 +18,7 @@ from ops.model import (
     WaitingStatus,
     ModelError,
 )
-from interfaces import CockroachDBPeers
+from cluster import CockroachDBCluster
 from interface_proxy_listen_tcp import ProxyListenTcpInterfaceProvides
 
 from jinja import Environment, FileSystemLoader
@@ -72,12 +72,12 @@ class CockroachDBCharm(CharmBase):
                       self.on.start,
                       # self.on.upgrade_charm,
                       self.on.config_changed,
-                      self.on.cockroachpeer_relation_changed,
+                      self.on.cluster_relation_changed,
                       self.on.cockroachdb_started,
                       self.on.proxy_listen_tcp_relation_joined):
             self.framework.observe(event, self)
 
-        self.peers = CockroachDBPeers(self, 'cockroachpeer')
+        self.cluster = CockroachDBCluster(self, 'cluster')
         self.tcp_load_balancer = ProxyListenTcpInterfaceProvides(self, 'proxy-listen-tcp')
 
     def on_install(self, event):
@@ -110,15 +110,15 @@ class CockroachDBCharm(CharmBase):
     def _setup_systemd_service(self):
         if self.is_single_node:
             # start-single-node will set replication factors for all zones to 1.
-            exec_start_line = f'ExecStart={self.COCKROACH_BINARY_PATH} start-single-node --advertise-addr {self.peers.advertise_addr} --insecure'
+            exec_start_line = f'ExecStart={self.COCKROACH_BINARY_PATH} start-single-node --advertise-addr {self.cluster.advertise_addr} --insecure'
         else:
-            peer_addresses = [self.peers.advertise_addr]
-            if self.peers.is_joined:
-                peer_addresses.extend(self.peers.peer_addresses)
+            peer_addresses = [self.cluster.advertise_addr]
+            if self.cluster.is_joined:
+                peer_addresses.extend(self.cluster.peer_addresses)
             join_addresses = ','.join([str(a) for a in peer_addresses])
             # --insecure until the charm gets CA setup support figured out.
             exec_start_line = (f'ExecStart={self.COCKROACH_BINARY_PATH} start --insecure '
-                               f'--advertise-addr={self.peers.advertise_addr} '
+                               f'--advertise-addr={self.cluster.advertise_addr} '
                                f'--join={join_addresses}')
         ctxt = {
             'working_directory': self.WORKING_DIRECTORY,
@@ -151,7 +151,7 @@ class CockroachDBCharm(CharmBase):
         # If both replication factors are set to 1 and the current unit != initial cluster unit,
         # don't start the process if the cluster has already been initialized.
         # This configuration is not practical in real deployments (i.e. multiple units, RF=1).
-        initial_unit = self.peers.initial_unit
+        initial_unit = self.cluster.initial_unit
         if self.is_single_node and (initial_unit is not None and self.model.unit.name != initial_unit):
             unit.status = BlockedStatus('Extra unit in a single-node deployment.')
             return
@@ -159,22 +159,22 @@ class CockroachDBCharm(CharmBase):
         self.state.is_started = True
         self.on.cockroachdb_started.emit()
 
-        if self.peers.is_joined and self.peers.is_cluster_initialized:
+        if self.cluster.is_joined and self.cluster.is_cluster_initialized:
             unit.status = ActiveStatus()
 
-    def on_cockroachpeer_relation_changed(self, event):
+    def on_cluster_relation_changed(self, event):
         self._setup_systemd_service()
 
-        if self.state.is_started and self.peers.is_cluster_initialized:
+        if self.state.is_started and self.cluster.is_cluster_initialized:
             self.model.unit.status = ActiveStatus()
 
     def on_cockroachdb_started(self, event):
-        if not self.peers.is_joined and not self.is_single_node:
+        if not self.cluster.is_joined and not self.is_single_node:
             self.unit.status = WaitingStatus('Waiting for peer units to join.')
             event.defer()
             return
 
-        if self.peers.is_cluster_initialized:
+        if self.cluster.is_cluster_initialized:
             # Skip this event when some other unit has already initialized a cluster.
             self.unit.status = ActiveStatus()
             return
@@ -215,7 +215,7 @@ class CockroachDBCharm(CharmBase):
         pass
 
     def on_proxy_listen_tcp_relation_joined(self, event):
-        if not self.peers.is_cluster_initialized or not self.state.is_started:
+        if not self.cluster.is_cluster_initialized or not self.state.is_started:
             event.defer()
 
         # TODO: make load-balancer options tunable.
@@ -229,8 +229,8 @@ class CockroachDBCharm(CharmBase):
             'option httpchk GET /health?ready=1',
             'option tcplog',
         ]
-        fqdn = socket.getnameinfo((str(self.peers.advertise_addr), 0), socket.NI_NAMEREQD)[0]
-        server_option = f'server {fqdn} {self.peers.advertise_addr}:{self.PSQL_PORT} check port {self.HTTP_PORT}'
+        fqdn = socket.getnameinfo((str(self.cluster.advertise_addr), 0), socket.NI_NAMEREQD)[0]
+        server_option = f'server {fqdn} {self.cluster.advertise_addr}:{self.PSQL_PORT} check port {self.HTTP_PORT}'
         self.tcp_load_balancer.expose_server(self.PSQL_PORT, listen_options, server_option)
 
 
