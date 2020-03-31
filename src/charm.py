@@ -21,7 +21,7 @@ from ops.model import (
 from cluster import CockroachDBCluster
 from interface_proxy_listen_tcp import ProxyListenTcpInterfaceProvides
 
-from jinja import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader
 from datetime import timedelta
 from time import sleep
 
